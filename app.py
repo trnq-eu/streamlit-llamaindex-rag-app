@@ -1,8 +1,8 @@
 import streamlit as st
-from llama_index import VectorStoreIndex, ServiceContext, Document
-from llama_index.llms import OpenAI
+from llama_index.core import VectorStoreIndex, Document
+from llama_index.llms.openai import OpenAI
 import openai
-from llama_index import SimpleDirectoryReader
+from llama_index.core import SimpleDirectoryReader, Settings
 
 # fonte: https://blog.streamlit.io/build-a-chatbot-with-custom-data-sources-powered-by-llamaindex/
 
@@ -21,12 +21,10 @@ def load_data():
     with st.spinner('Sto caricando e indicizzando i documenti. Potrebbe volerci qualche minuto'):
         reader = SimpleDirectoryReader(input_dir='./data', recursive=True)
         docs = reader.load_data()
-        service_context = ServiceContext.from_defaults(llm=OpenAI(model='gpt-3.5-turbo', 
-                                                                  temperature=0.2, 
-                                                                  system_prompt='''Sei un archivista professionista e il tuo ruolo è quello di fare delle ricerche storiche basandoti su delle fonti autorevoli. 
-                                                                  Rispondi alle domande citando la fonte delle informazioni che hai raccolto ed esponi i fatti con autorevolezza e precisione. 
-                                                                  Non inventare nulla.''')),
-        index = VectorStoreIndex.from_documents(docs, service_context=service_context)
+        # Create an instance of Settings with the OpenAI configuration
+        # Configure the Settings class with the OpenAI instance
+        Settings.llm = OpenAI(model="gpt-3.5-turbo", temperature=0.1)
+        index = VectorStoreIndex.from_documents(docs)
         return index
     
 index = load_data()
