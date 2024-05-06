@@ -1,9 +1,10 @@
 import streamlit as st
-from llama_index.core import VectorStoreIndex, Document
+from llama_index.core import VectorStoreIndex, SimpleDirectoryReader, Settings
 from llama_index.llms.openai import OpenAI
+from llama_index.vector_stores.chroma import ChromaVectorStore
+from llama_index.core import StorageContext
 import openai
-from llama_index.core import SimpleDirectoryReader, Settings
-
+import chromadb
 # fonte: https://blog.streamlit.io/build-a-chatbot-with-custom-data-sources-powered-by-llamaindex/
 
 openai.api_key = st.secrets.openai_key
@@ -19,12 +20,25 @@ if "messages" not in st.session_state.keys(): # Inizializza lo storico dei messa
 def load_data():
     # https://docs.llamaindex.ai/en/stable/module_guides/indexing/vector_store_index/
     with st.spinner('Sto caricando e indicizzando i documenti. Potrebbe volerci qualche minuto'):
-        reader = SimpleDirectoryReader(input_dir='./data', recursive=True)
-        docs = reader.load_data()
+        # reader = SimpleDirectoryReader(input_dir='./data', recursive=True)
+        # docs = reader.load_data()
+        docs = SimpleDirectoryReader(input_dir='./data').load_data()
+        
+        # initialize client, setting path to save data
+        db = chromadb.PersistentClient(path="./chroma_db")
+
+        # create a chroma collection
+        chroma_collection = db.get_or_create_collection('digitallib')
+
+        # assign chroma as the vector_store to the context
+        vector_store = ChromaVectorStore(chroma_collection = chroma_collection)
+        storage_context = StorageContext.from_defaults(vector_store=vector_store)
+
+
         # Create an instance of Settings with the OpenAI configuration
         # Configure the Settings class with the OpenAI instance
         Settings.llm = OpenAI(model="gpt-3.5-turbo", temperature=0.1)
-        index = VectorStoreIndex.from_documents(docs)
+        index = VectorStoreIndex.from_documents(docs, storage_context = storage_context)
         return index
     
 index = load_data()
