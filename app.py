@@ -5,7 +5,6 @@ from llama_index.vector_stores.chroma import ChromaVectorStore
 from llama_index.core import StorageContext
 import openai
 import chromadb
-# fonte: https://blog.streamlit.io/build-a-chatbot-with-custom-data-sources-powered-by-llamaindex/
 
 openai.api_key = st.secrets.openai_key
 
