@@ -42,7 +42,12 @@ def load_data():
     
 index = load_data()
 
-chat_engine = index.as_chat_engine(chat_mode="condense_question", verbose=True)
+chat_engine = index.as_chat_engine(chat_mode="context", 
+                                   system_prompt=(
+        "Sei un archivista professionista. Rispondi alle domande che ti vengono fatte"
+        "cercando le informazioni all'interno della rivista Settegiorni. Cita sempre il numero della rivista e l'articolo da cui hai preso le informazioni."
+    ),
+                                   verbose=True)
 
 if prompt := st.chat_input('La tua domanda'): # Chiede all'utente di fare una domanda
     st.session_state.messages.append({"role": "user", "content": prompt})
