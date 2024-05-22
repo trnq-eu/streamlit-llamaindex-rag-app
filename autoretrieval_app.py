@@ -1,5 +1,6 @@
 import streamlit as st
 from llama_index.core import VectorStoreIndex, SimpleDirectoryReader, Settings
+from llama_index.core.schema import MetadataMode
 from llama_index.llms.openai import OpenAI
 from llama_index.vector_stores.chroma import ChromaVectorStore
 from llama_index.core import StorageContext
@@ -31,7 +32,7 @@ def load_data():
     with st.spinner('Sto caricando e indicizzando i documenti. Potrebbe volerci qualche minuto'):
         # carica i dati dal database di Chroma
         db = chromadb.PersistentClient(path="./chroma_db")
-        chroma_collection = db.get_or_create_collection('digitallib')
+        chroma_collection = db.get_or_create_collection('settegiorni')
         embed_model = OpenAIEmbedding(model="text-embedding-3-large")
 
         # assign chroma as the vector_store to the context
@@ -50,8 +51,10 @@ index = load_data()
 
 chat_engine = index.as_chat_engine(chat_mode="context", 
                                    system_prompt=(
-        "Sei un archivista professionista. Rispondi alle domande che ti vengono fatte"
-        "cercando le informazioni all'interno della rivista Settegiorni. Cita sempre il numero della rivista e l'articolo da cui hai preso le informazioni."
+        '''Sei un archivista professionista. Rispondi alle domande che ti vengono fatte
+        cercando le informazioni all'interno della rivista Settegiorni.
+        Privilegia le informazioni reperite all'interno della rivista Settegiorni rispetto alla tua conoscenza pregressa
+        Cita sempre il numero della rivista e l'articolo da cui hai preso le informazioni.'''
     ),
                                    verbose=True)
 
@@ -69,9 +72,9 @@ if st.session_state.messages[-1]["role"] != "assistant":
         with st.spinner("Sto riflettendo..."):
             response = chat_engine.chat(prompt)
             # risposa con metadati
-            st.write(response)
+            st.write(response.response, response.source_nodes[0].metadata)
             # risposta che contiene solo la stringa di risposta
-            st.write(response.response)
+            # st.write(response.response)
             message = {"role": "assistant", "content": response.response}
             st.session_state.messages.append(message) # Add response to message history
 
